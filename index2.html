@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Business Management System — Single File (Supabase REST + Charts)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    /* Dark theme base */
+    :root {
+      --bg: #0b0b12;
+      --panel: #12121b;
+      --panel-2: #161625;
+      --muted: #8b8ba7;
+      --text: #e9e9f1;
+      --border: rgba(255,255,255,0.1);
+      --brand: #3b82f6;
+      --danger: #ef4444;
+      --warn: #eab308;
+      --success: #22c55e;
+      --green: #22c55e;
+      --red: #ef4444;
+      --sky: #38bdf8;
+      --yellow: #eab308;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      line-height: 1.4;
+    }
+
+    /* Layout */
+    .app { min-height: 100vh; display: grid; grid-template-columns: 260px 1fr; }
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, #0b0b12 0%, #0b0b12cc 100%);
+      position: sticky; top: 0; height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    .sidebar h1 { font-size: 18px; margin: 0; }
+    .sidebar .head { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .nav { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .nav button {
+      width: 100%; text-align: left; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid transparent; background: transparent; color: var(--text);
+      cursor: pointer;
+    }
+    .nav button:hover { background: #202036; }
+    .nav button.active { background: #203056; border-color: var(--border); }
+    .sidebar .foot { margin-top: auto; padding: 14px; color: var(--muted); font-size: 12px; }
+
+    .main { padding: 18px; }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .header h2 { margin: 0; font-size: 22px; }
+    .muted { color: var(--muted); font-size: 12px; }
+
+    /* Cards, panels */
+    .grid { display: grid; gap: 14px; }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-2 { grid-template-columns: 360px 1fr; gap: 18px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 16px; }
+    .metric { font-size: 28px; font-weight: 700; }
+    .count { font-size: 22px; font-weight: 700; }
+
+    .charts { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-top: 14px; }
+    .chart-wrap { position: relative; width: 100%; height: 320px; }
+    canvas { width: 100%; height: 100%; display: block; }
+
+    /* Forms */
+    form .field { display: grid; gap: 6px; }
+    .label { color: var(--muted); font-size: 12px; }
+    input, select, textarea {
+      background: #151528;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      outline: none;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #2b3b76; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      appearance: none; border: 1px solid transparent; border-radius: 8px;
+      padding: 10px 14px; cursor: pointer; color: #fff; background: #2a3770;
+    }
+    .btn:hover { background: #354693; }
+    .btn-secondary { background: #22243a; border-color: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #2a2c48; }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); }
+    .btn-outline:hover { background: #242448; }
+
+    /* Tables */
+    .table-wrap { overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead tr { background: #1a1a2b; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:hover td { background: #12122a; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border);
+    }
+    .pill-green { background: rgba(34,197,94,0.12); color: #86efac; }
+    .pill-yellow { background: rgba(234,179,8,0.12); color: #fde047; }
+    .pill-red { background: rgba(239,68,68,0.12); color: #fca5a5; }
+    .pill-sky { background: rgba(56,189,248,0.12); color: #7dd3fc; }
+
+    /* Toasts */
+    #toast { position: fixed; right: 16px; top: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+    .toast {
+      background: #1f2937; color: #fff; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .toast.error { background: #7f1d1d; }
+    .toast.warn { background: #713f12; }
+    .toast.success { background: #14532d; }
+
+    /* Alert */
+    .alert {
+      border: 1px solid var(--border);
+      background: #332f12;
+      color: #fde68a;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) { .charts { grid-template-columns: 1fr; } }
+    @media (max-width: 1024px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 640px) {
+      .grid-4 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" aria-live="polite" aria-atomic="true"></div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="head">
+        <h1>Business Management</h1>
+        <div class="muted">Single HTML • Supabase REST</div>
+      </div>
+      <nav class="nav">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="clients">Clients</button>
+        <button class="tab-btn" data-tab="expenses">Expenses</button>
+        <button class="tab-btn" data-tab="payments">Client Payments</button>
+        <button class="tab-btn" data-tab="employees">Employees</button>
+      </nav>
+      <div class="foot">
+        Dark theme • No CDN • No localStorage
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="header">
+        <div>
+          <h2>Business Management System</h2>
+          <div class="muted">Live CRUD with Supabase (REST). Dashboard auto-updates + Charts.</div>
+        </div>
+      </div>
+
+      <div id="config-alert" class="alert" hidden>
+        Configure your Supabase credentials in the script constants (SUPABASE_URL and SUPABASE_ANON_KEY), then reload this file.
+      </div>
+
+       Dashboard 
+      <section id="tab-dashboard">
+        <div class="grid grid-3">
+          <div class="card">
+            <div class="muted">Total Income</div>
+            <div class="metric" id="metric-income">—</div>
+          </div>
+          <div class="card">
+            <div class="muted">Total Expenses</div>
+            <div class="metric" id="metric-expenses">—</div>
+          </div>
+          <div class="card">
+            <div class="muted">Profit</div>
+            <div class="metric" id="metric-profit">—</div>
+          </div>
+        </div>
+
+        <div class="grid grid-4" style="margin-top:14px;">
+          <div class="card">
+            <div class="muted">Current Projects</div>
+            <div class="count" id="count-current">0</div>
+          </div>
+          <div class="card">
+            <div class="muted">Pending Projects</div>
+            <div class="count" id="count-pending">0</div>
+          </div>
+          <div class="card">
+            <div class="muted">Completed Projects</div>
+            <div class="count" id="count-completed">0</div>
+          </div>
+          <div class="card">
+            <div class="muted">Cancelled Projects</div>
+            <div class="count" id="count-cancelled">0</div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <div class="card">
+            <h3>Income vs Expenses (Last 12 Months)</h3>
+            <div class="chart-wrap">
+              <canvas id="chart-income-expenses"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Project Status</h3>
+            <div class="chart-wrap" style="height: 320px;">
+              <canvas id="chart-status"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+       Clients 
+      <section id="tab-clients" hidden>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Add / Edit Client</h3>
+            <form id="clients-form" class="grid" style="gap:10px;">
+              <div class="field">
+                <label class="label">Client Name*</label>
+                <input name="client_name" required placeholder="Aman Sharma" />
+              </div>
+              <div class="field">
+                <label class="label">Company Name</label>
+                <input name="company_name" placeholder="Acme Pvt Ltd" />
+              </div>
+              <div class="field">
+                <label class="label">Contact Info</label>
+                <input name="contact_info" placeholder="phone / email" />
+              </div>
+              <div class="field">
+                <label class="label">Service Name</label>
+                <input name="service_name" placeholder="Web Development" />
+              </div>
+              <div class="field">
+                <label class="label">Service Cost</label>
+                <input type="number" step="0.01" name="service_cost" placeholder="1200" />
+              </div>
+              <div class="field">
+                <label class="label">Added Date</label>
+                <input type="date" name="added_date" />
+              </div>
+              <div class="field">
+                <label class="label">Project Status</label>
+                <select name="project_status">
+                  <option>Current</option>
+                  <option>Pending</option>
+                  <option>Completed</option>
+                  <option>Cancelled</option>
+                </select>
+              </div>
+              <div class="actions" style="margin-top:2px;">
+                <button class="btn" id="client-submit">Add Client</button>
+                <button type="button" class="btn-secondary btn" id="clients-clear">Clear</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="row" style="justify-content: space-between; align-items: center; margin-bottom:6px;">
+              <h3>Clients</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Service</th>
+                    <th>Cost</th>
+                    <th>Added</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="clients-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+       Expenses 
+      <section id="tab-expenses" hidden>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Add / Edit Expense</h3>
+            <form id="expenses-form" class="grid" style="gap:10px;">
+              <div class="field">
+                <label class="label">Expense Date*</label>
+                <input type="date" name="expense_date" required />
+              </div>
+              <div class="field">
+                <label class="label">Expense Detail*</label>
+                <input name="expense_detail" required placeholder="Domain renewal" />
+              </div>
+              <div class="field">
+                <label class="label">Linked Client</label>
+                <select name="expense_client_id" class="client-select">
+                  <option value="">Select client</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="label">Amount</label>
+                <input type="number" step="0.01" name="amount" placeholder="20" />
+              </div>
+              <div class="actions">
+                <button class="btn" id="expense-submit">Add Expense</button>
+                <button type="button" class="btn-secondary btn" id="expenses-clear">Clear</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="row" style="justify-content: space-between; align-items: center; margin-bottom:6px;">
+              <h3>Expenses</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Detail</th>
+                    <th>Client</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="expenses-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+       Payments 
+      <section id="tab-payments" hidden>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Add / Edit Payment</h3>
+            <form id="payments-form" class="grid" style="gap:10px;">
+              <div class="field">
+                <label class="label">Client*</label>
+                <select name="payment_client_id" required class="client-select">
+                  <option value="">Select client</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="label">Service Name</label>
+                <input name="service_name" placeholder="Defaults from client" />
+              </div>
+              <div class="field">
+                <label class="label">Service Cost</label>
+                <input type="number" step="0.01" name="service_cost" placeholder="Defaults from client" />
+              </div>
+              <div class="field">
+                <label class="label">Payment Status</label>
+                <select name="payment_status">
+                  <option>Paid</option>
+                  <option>Pending</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="label">Payment Date</label>
+                <input type="date" name="payment_date" />
+              </div>
+              <div class="field">
+                <label class="label">Pending Reason</label>
+                <input name="pending_reason" placeholder="If status is Pending" />
+              </div>
+              <div class="actions">
+                <button class="btn" id="payment-submit">Add Payment</button>
+                <button type="button" class="btn-secondary btn" id="payments-clear">Clear</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="row" style="justify-content: space-between; align-items: center; margin-bottom:6px;">
+              <h3>Payments</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Service</th>
+                    <th>Cost</th>
+                    <th>Status</th>
+                    <th>Payment Date</th>
+                    <th>Pending Reason</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="payments-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+       Employees 
+      <section id="tab-employees" hidden>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3>Add / Edit Employee</h3>
+            <form id="employees-form" class="grid" style="gap:10px;">
+              <div class="field">
+                <label class="label">Employee Name*</label>
+                <input name="employee_name" required placeholder="Riya Kapoor" />
+              </div>
+              <div class="field">
+                <label class="label">Skills</label>
+                <input name="skills" placeholder="React, Node, Design" />
+              </div>
+              <div class="field">
+                <label class="label">Contact Info</label>
+                <input name="contact_info" placeholder="phone / email" />
+              </div>
+              <div class="field">
+                <label class="label">Client Work Handled</label>
+                <input name="client_work_handled" placeholder="Aman — Website" />
+              </div>
+              <div class="actions">
+                <button class="btn" id="employee-submit">Add Employee</button>
+                <button type="button" class="btn-secondary btn" id="employees-clear">Clear</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="row" style="justify-content: space-between; align-items: center; margin-bottom:6px;">
+              <h3>Employees</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Skills</th>
+                    <th>Contact</th>
+                    <th>Client Work</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="employees-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ========= 1) SET YOUR SUPABASE CREDENTIALS HERE (then open the file) =========
+    // Example:
+    // const SUPABASE_URL = "https://abcd1234.supabase.co";
+    // const SUPABASE_ANON_KEY = "eyJ...your_anon_key...";
+    const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co"; // <-- CHANGE THIS
+    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY"; // <-- CHANGE THIS
+    // =============================================================================
+
+    // Config + helpers
+    const SB_URL = (SUPABASE_URL || "").replace(/\/+$/, "");
+    const SB_KEY = SUPABASE_ANON_KEY || "";
+    const isConfigured =
+      SB_URL && SB_KEY && !SB_URL.includes("YOUR-PROJECT-REF") && !SB_KEY.includes("YOUR-ANON-KEY");
+
+    const fmtCurrency = (n) =>
+      new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(Number(n || 0));
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString() : '-';
+
+    const toastWrap = document.getElementById('toast');
+    function toast(msg, type='success') {
+      const el = document.createElement('div');
+      el.className = 'toast ' + (type === 'error' ? 'error' : type === 'warn' ? 'warn' : 'success');
+      el.textContent = msg;
+      toastWrap.appendChild(el);
+      setTimeout(() => { el.remove(); }, 2800);
+    }
+
+    function authHeaders(json=true, prefer='return=representation') {
+      return {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        ...(json ? { 'Content-Type': 'application/json' } : {}),
+        ...(prefer ? { 'Prefer': prefer } : {})
+      };
+    }
+    const rest = (path, qs='') => `${SB_URL}/rest/v1/${path}${qs ? (path.includes('?') ? '&' + qs : '?' + qs) : ''}`;
+
+    // Tabs
+    const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabs = {
+      dashboard: document.getElementById('tab-dashboard'),
+      clients: document.getElementById('tab-clients'),
+      expenses: document.getElementById('tab-expenses'),
+      payments: document.getElementById('tab-payments'),
+      employees: document.getElementById('tab-employees'),
+    };
+    function setTab(name) {
+      tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      Object.entries(tabs).forEach(([key, el]) => { el.hidden = key !== name; });
+    }
+    tabBtns.forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+    setTab('dashboard');
+
+    // Caches
+    let clientsCache = [];
+    let expensesCache = [];
+    let paymentsCache = [];
+
+    // Charts util
+    function setupCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+      return { ctx, width: rect.width, height: rect.height };
+    }
+
+    function niceMax(max) {
+      if (max <= 0) return 1;
+      const exp = Math.floor(Math.log10(max));
+      const base = Math.pow(10, exp);
+      const n = max / base;
+      let nice = 1;
+      if (n <= 1) nice = 1;
+      else if (n <= 2) nice = 2;
+      else if (n <= 5) nice = 5;
+      else nice = 10;
+      return nice * base;
+    }
+
+    function drawBarChart(canvas, labels, seriesA, seriesB, colors = { a: '#22c55e', b: '#ef4444' }) {
+      const { ctx, width, height } = setupCanvas(canvas);
+      ctx.clearRect(0, 0, width, height);
+
+      // Margins and plot area
+      const m = { l: 44, r: 16, t: 18, b: 36 };
+      const plotW = Math.max(1, width - m.l - m.r);
+      const plotH = Math.max(1, height - m.t - m.b);
+
+      // Axes
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+
+      const allVals = [...seriesA, ...seriesB];
+      const rawMax = Math.max(1, ...allVals);
+      const yMax = niceMax(rawMax);
+      const ticks = 5;
+
+      // Grid + y labels
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= ticks; i++) {
+        const y = m.t + (plotH * i) / ticks;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(m.l, y);
+        ctx.lineTo(m.l + plotW, y);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        const val = Math.round(yMax * (1 - i / ticks));
+        ctx.fillText(val.toString(), m.l - 6, y);
+      }
+
+      // x labels
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const stepX = plotW / labels.length;
+      labels.forEach((lbl, i) => {
+        const x = m.l + stepX * (i + 0.5);
+        ctx.fillStyle = '#9aa1b3';
+        ctx.fillText(lbl, x, m.t + plotH + 8);
+      });
+
+      // Bars
+      const groupW = Math.min(48, stepX * 0.7);
+      const barW = Math.max(4, (groupW - 6) / 2);
+      const offset = (stepX - groupW) / 2;
+
+      function yFor(val) {
+        const ratio = Math.min(1, val / yMax);
+        return m.t + plotH * (1 - ratio);
+      }
+
+      for (let i = 0; i < labels.length; i++) {
+        const baseX = m.l + i * stepX + offset;
+        // series A (Income)
+        const xA = baseX;
+        const yA = yFor(seriesA[i] || 0);
+        const hA = m.t + plotH - yA;
+        ctx.fillStyle = colors.a;
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(xA, yA, barW, hA);
+
+        // series B (Expenses)
+        const xB = baseX + barW + 6;
+        const yB = yFor(seriesB[i] || 0);
+        const hB = m.t + plotH - yB;
+        ctx.fillStyle = colors.b;
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(xB, yB, barW, hB);
+      }
+
+      // Legend
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const ly = m.t - 6;
+      function legendItem(text, color, lx) {
+        ctx.fillStyle = color;
+        ctx.fillRect(lx, ly - 6, 12, 12);
+        ctx.fillStyle = '#e5e7eb';
+        ctx.fillText(text, lx + 16, ly);
+      }
+      legendItem('Income', colors.a, m.l);
+      legendItem('Expenses', colors.b, m.l + 100);
+    }
+
+    function drawDonutChart(canvas, segments) {
+      const { ctx, width, height } = setupCanvas(canvas);
+      ctx.clearRect(0, 0, width, height);
+
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = Math.min(width, height) / 2 - 10;
+      const innerR = radius * 0.6;
+
+      const total = segments.reduce((a, s) => a + s.value, 0);
+      if (total <= 0) {
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('No data', cx, cy);
+        return;
+      }
+
+      let start = -Math.PI / 2;
+      segments.forEach(seg => {
+        const angle = (seg.value / total) * Math.PI * 2;
+        const end = start + angle;
+
+        // Arc
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = seg.color;
+        ctx.globalAlpha = 0.9;
+        ctx.fill();
+
+        start = end;
+      });
+
+      // Cutout
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Center label
+      ctx.fillStyle = '#e5e7eb';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '16px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText(total + ' total', cx, cy);
+
+      // Legend (right side)
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      let lx = 14, ly = 16;
+      segments.forEach(seg => {
+        ctx.fillStyle = seg.color;
+        ctx.fillRect(lx, ly, 12, 12);
+        ctx.fillStyle = '#e5e7eb';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`${seg.label}: ${seg.value}`, lx + 16, ly - 1);
+        ly += 18;
+      });
+    }
+
+    // Dashboard
+    async function refreshDashboard() {
+      if (!isConfigured) return;
+      try {
+        const paysRes = await fetch(rest('payments', 'select=service_cost,payment_status'), { headers: authHeaders(false) });
+        const pays = await paysRes.json();
+        const totalIncome = (pays || []).filter(p => p.payment_status === 'Paid').reduce((a,b) => a + Number(b.service_cost || 0), 0);
+
+        const expRes = await fetch(rest('expenses', 'select=amount'), { headers: authHeaders(false) });
+        const exps = await expRes.json();
+        const totalExpenses = (exps || []).reduce((a,b) => a + Number(b.amount || 0), 0);
+
+        const profit = totalIncome - totalExpenses;
+
+        const cliRes = await fetch(rest('clients', 'select=project_status'), { headers: authHeaders(false) });
+        const clis = await cliRes.json();
+        const counts = { Current: 0, Pending: 0, Completed: 0, Cancelled: 0 };
+        (clis || []).forEach(r => { if (counts[r.project_status] != null) counts[r.project_status]++; });
+
+        document.getElementById('metric-income').textContent = fmtCurrency(totalIncome);
+        document.getElementById('metric-expenses').textContent = fmtCurrency(totalExpenses);
+        document.getElementById('metric-profit').textContent = fmtCurrency(profit);
+        document.getElementById('count-current').textContent = counts.Current;
+        document.getElementById('count-pending').textContent = counts.Pending;
+        document.getElementById('count-completed').textContent = counts.Completed;
+        document.getElementById('count-cancelled').textContent = counts.Cancelled;
+      } catch (e) {}
+    }
+
+    // Helpers: last 12 months labels
+    function monthKey(date) {
+      const d = new Date(date);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      return `${y}-${String(m).padStart(2,'0')}`;
+    }
+    function monthLabelFromKey(key) {
+      const [y, m] = key.split('-').map(Number);
+      const dt = new Date(y, m - 1, 1);
+      return dt.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+    }
+    function lastNMonthsKeys(n = 12) {
+      const now = new Date();
+      const list = [];
+      for (let i = n - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        list.push(monthKey(d));
+      }
+      return list;
+    }
+
+    function renderChartsFromCaches() {
+      // Bar: Income vs Expenses
+      const months = lastNMonthsKeys(12);
+      const incomeByMonth = Object.fromEntries(months.map(k => [k, 0]));
+      const expenseByMonth = Object.fromEntries(months.map(k => [k, 0]));
+
+      (paymentsCache || []).forEach(p => {
+        if (p.payment_status !== 'Paid') return;
+        const d = p.payment_date || p.inserted_at || new Date().toISOString();
+        const k = monthKey(d);
+        if (incomeByMonth[k] != null) incomeByMonth[k] += Number(p.service_cost || 0);
+      });
+      (expensesCache || []).forEach(ex => {
+        const d = ex.expense_date || ex.inserted_at || new Date().toISOString();
+        const k = monthKey(d);
+        if (expenseByMonth[k] != null) expenseByMonth[k] += Number(ex.amount || 0);
+      });
+
+      const labels = months.map(monthLabelFromKey);
+      const incomeArr = months.map(k => incomeByMonth[k] || 0);
+      const expensesArr = months.map(k => expenseByMonth[k] || 0);
+
+      const barCanvas = document.getElementById('chart-income-expenses');
+      drawBarChart(barCanvas, labels, incomeArr, expensesArr, { a: '#22c55e', b: '#ef4444' });
+
+      // Donut: Project Status
+      const counts = { Current: 0, Pending: 0, Completed: 0, Cancelled: 0 };
+      (clientsCache || []).forEach(c => {
+        if (counts[c.project_status] != null) counts[c.project_status]++;
+      });
+
+      const donutCanvas = document.getElementById('chart-status');
+      const segments = [
+        { label: 'Current', value: counts.Current, color: '#38bdf8' },
+        { label: 'Pending', value: counts.Pending, color: '#eab308' },
+        { label: 'Completed', value: counts.Completed, color: '#22c55e' },
+        { label: 'Cancelled', value: counts.Cancelled, color: '#ef4444' },
+      ];
+      drawDonutChart(donutCanvas, segments);
+    }
+
+    // Clients
+    let editingClientId = null;
+    async function refreshClients() {
+      if (!isConfigured) return;
+      const res = await fetch(rest('clients', 'select=*&order=inserted_at.desc'), { headers: authHeaders(false) });
+      const data = await res.json();
+      clientsCache = data || [];
+      const tbody = document.getElementById('clients-tbody');
+      tbody.innerHTML = '';
+      (data || []).forEach(row => {
+        const tr = document.createElement('tr');
+        const statusClass =
+          row.project_status === 'Completed' ? 'pill pill-green' :
+          row.project_status === 'Pending' ? 'pill pill-yellow' :
+          row.project_status === 'Cancelled' ? 'pill pill-red' : 'pill pill-sky';
+        tr.innerHTML = `
+          <td>${row.client_name || '-'}</td>
+          <td>${row.company_name || '-'}</td>
+          <td>${row.contact_info || '-'}</td>
+          <td>${row.service_name || '-'}</td>
+          <td>${fmtCurrency(row.service_cost)}</td>
+          <td>${fmtDate(row.added_date)}</td>
+          <td><span class="${statusClass}">${row.project_status || '-'}</span></td>
+          <td>
+            <div class="row">
+              <button class="btn btn-outline" data-action="edit" data-id="${row.id}">Edit</button>
+              <button class="btn btn-danger" data-action="delete" data-id="${row.id}">Delete</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      populateClientSelects();
+    }
+    function populateClientSelects() {
+      const selects = Array.from(document.querySelectorAll('.client-select'));
+      selects.forEach(sel => {
+        const current = sel.value;
+        sel.innerHTML = '<option value="">Select client</option>';
+        clientsCache.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.client_name + (c.company_name ? ' — ' + c.company_name : '');
+          sel.appendChild(opt);
+        });
+        if (current) sel.value = current;
+      });
+    }
+    document.getElementById('clients-tbody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      if (action === 'edit') {
+        const row = clientsCache.find(r => r.id === id);
+        if (!row) return;
+        const f = document.getElementById('clients-form');
+        f.client_name.value = row.client_name || '';
+        f.company_name.value = row.company_name || '';
+        f.contact_info.value = row.contact_info || '';
+        f.service_name.value = row.service_name || '';
+        f.service_cost.value = row.service_cost || 0;
+        f.added_date.value = row.added_date ? new Date(row.added_date).toISOString().slice(0,10) : '';
+        f.project_status.value = row.project_status || 'Current';
+        editingClientId = row.id;
+        document.getElementById('client-submit').textContent = 'Update Client';
+        toast('Editing client. Update and submit.', 'warn');
+      } else if (action === 'delete') {
+        if (!confirm('Delete this client?')) return;
+        await fetch(rest('clients', 'id=eq.' + encodeURIComponent(id)), { method: 'DELETE', headers: authHeaders(false, '') });
+        toast('Client deleted');
+        refreshAll();
+      }
+    });
+    document.getElementById('clients-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.currentTarget;
+      const payload = {
+        client_name: f.client_name.value.trim(),
+        company_name: f.company_name.value.trim() || null,
+        contact_info: f.contact_info.value.trim() || null,
+        service_name: f.service_name.value.trim() || null,
+        service_cost: Number(f.service_cost.value || 0),
+        added_date: f.added_date.value || null,
+        project_status: f.project_status.value || 'Current',
+      };
+      if (!payload.client_name) return toast('Client name is required', 'error');
+
+      if (editingClientId) {
+        await fetch(rest('clients', 'id=eq.' + encodeURIComponent(editingClientId)), {
+          method: 'PATCH', headers: authHeaders(true), body: JSON.stringify(payload)
+        });
+        toast('Client updated');
+        editingClientId = null;
+        document.getElementById('client-submit').textContent = 'Add Client';
+      } else {
+        await fetch(rest('clients'), {
+          method: 'POST', headers: authHeaders(true), body: JSON.stringify(payload)
+        });
+        toast('Client added');
+      }
+      f.reset();
+      refreshAll();
+    });
+    document.getElementById('clients-clear').addEventListener('click', () => {
+      editingClientId = null;
+      document.getElementById('clients-form').reset();
+      document.getElementById('client-submit').textContent = 'Add Client';
+    });
+
+    // Expenses
+    let editingExpenseId = null;
+    async function refreshExpenses() {
+      if (!isConfigured) return;
+      const res = await fetch(rest('expenses', 'select=*,clients(client_name,company_name),inserted_at&order=inserted_at.desc'), { headers: authHeaders(false) });
+      const rows = await res.json();
+      expensesCache = rows || [];
+      const tbody = document.getElementById('expenses-tbody');
+      tbody.innerHTML = '';
+      (rows || []).forEach(row => {
+        const clientLabel = row.clients ? row.clients.client_name + (row.clients.company_name ? ' — ' + row.clients.company_name : '') : '-';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${fmtDate(row.expense_date)}</td>
+          <td>${row.expense_detail || '-'}</td>
+          <td>${clientLabel}</td>
+          <td>${fmtCurrency(row.amount)}</td>
+          <td>
+            <div class="row">
+              <button class="btn btn-outline" data-action="edit" data-id="${row.id}">Edit</button>
+              <button class="btn btn-danger" data-action="delete" data-id="${row.id}">Delete</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    document.getElementById('expenses-tbody').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      if (action === 'edit') {
+        const res = await fetch(rest('expenses', 'select=*&id=eq.' + encodeURIComponent(id)), { headers: authHeaders(false) });
+        const data = (await res.json())[0];
+        const f = document.getElementById('expenses-form');
+        f.expense_date.value = data.expense_date ? new Date(data.expense_date).toISOString().slice(0,10) : '';
+        f.expense_detail.value = data.expense_detail || '';
+        f.expense_client_id.value = data.client_id || '';
+        f.amount.value = data.amount || 0;
+        editingExpenseId = data.id;
+        document.getElementById('expense-submit').textContent = 'Update Expense';
+      } else if (action === 'delete') {
+        if (!confirm('Delete this expense?')) return;
+        await fetch(rest('expenses', 'id=eq.' + encodeURIComponent(id)), { method: 'DELETE', headers: authHeaders(false, '') });
+        toast('Expense deleted');
+        refreshAll();
+      }
+    });
+    document.getElementById('expenses-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.currentTarget;
+      const payload = {
+        expense_date: f.expense_date.value || null,
+        expense_detail: f.expense_detail.value.trim(),
+        client_id: f.expense_client_id.value || null,
+        amount: Number(f.amount.value || 0),
+      };
+      if (!payload.expense_date || !payload.expense_detail) return toast('Date and Detail required', 'error');
+
+      if (editingExpenseId) {
+        await fetch(rest('expenses', 'id=eq.' + encodeURIComponent(editingExpenseId)), {
+        
