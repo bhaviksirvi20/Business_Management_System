@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Business Management System - Professional Edition</title>
+    <meta name="description" content="Premium Business Management System with in-memory storage and modern UI." />
+    <meta name="author" content="Lovable" />
+
+    <style>
+      /* Professional Black & White Theme */
+      :root {
+        --bg: #000000;
+        --panel: #111111;
+        --panel-2: #1a1a1a;
+        --panel-3: #222222;
+        --muted: #888888;
+        --text: #ffffff;
+        --border: rgba(255,255,255,0.1);
+        --brand: #ffffff;
+        --brand-hover: #cccccc;
+        --danger: #ffffff;
+        --warn: #ffffff;
+        --success: #ffffff;
+        --green: #ffffff;
+        --red: #ffffff;
+        --sky: #ffffff;
+        --yellow: #ffffff;
+        --purple: #ffffff;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.5;
+      }
+
+      /* Layout */
+      .app { 
+        min-height: 100vh; 
+        display: grid; 
+        grid-template-columns: 280px 1fr;
+        background: var(--bg);
+      }
+      
+      .sidebar {
+        border-right: 1px solid var(--border);
+        background: var(--panel);
+        position: sticky; 
+        top: 0; 
+        height: 100vh;
+        display: flex; 
+        flex-direction: column;
+        box-shadow: var(--shadow-lg);
+      }
+      
+      .sidebar .head { 
+        padding: 24px 20px; 
+        border-bottom: 1px solid var(--border); 
+        background: var(--panel-3);
+      }
+      
+      .sidebar h1 { 
+        font-size: 20px; 
+        font-weight: 700; 
+        margin: 0 0 4px;
+        color: var(--text);
+      }
+      
+      .sidebar .subtitle {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .nav { 
+        padding: 16px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 6px; 
+      }
+      
+      .nav button {
+        width: 100%; 
+        text-align: left; 
+        padding: 12px 16px; 
+        border-radius: 10px;
+        border: 1px solid transparent; 
+        background: transparent; 
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .nav button:hover { 
+        background: var(--panel-2); 
+        border-color: var(--border);
+        transform: translateX(4px);
+      }
+      
+      .nav button.active { 
+        background: var(--panel-3); 
+        border-color: var(--border);
+        color: var(--text);
+      }
+      
+      .nav button i {
+        width: 18px;
+        font-size: 14px;
+        text-align: center;
+      }
+
+      .sidebar .foot { 
+        margin-top: auto; 
+        padding: 20px; 
+        color: var(--muted); 
+        font-size: 11px;
+        border-top: 1px solid var(--border);
+        background: var(--panel-3);
+      }
+
+      .main { 
+        padding: 24px; 
+        background: var(--bg);
+        min-height: 100vh;
+      }
+      
+      .header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        gap: 16px; 
+        margin-bottom: 24px;
+        padding: 20px 0;
+      }
+      
+      .header h2 { 
+        margin: 0; 
+        font-size: 28px; 
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .header .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 12px;
+        color: var(--text);
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--text);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+
+      /* Cards */
+      .grid { display: grid; gap: 20px; }
+      .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .grid-2 { grid-template-columns: 400px 1fr; gap: 24px; }
+      
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border);
+      }
+      
+      .card:hover { 
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--text);
+      }
+      
+      .card h3 { 
+        margin: 0 0 12px; 
+        font-size: 18px; 
+        font-weight: 600;
+      }
+      
+      .metric { 
+        font-size: 36px; 
+        font-weight: 800; 
+        line-height: 1;
+        color: var(--text);
+      }
+      
+      .count { 
+        font-size: 28px; 
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .muted { color: var(--muted); font-size: 13px; font-weight: 500; }
+
+      /* Forms */
+      .form-grid { display: grid; gap: 16px; }
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .field { display: grid; gap: 8px; }
+      .label { 
+        color: var(--muted); 
+        font-size: 13px; 
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      input, select, textarea {
+        background: var(--panel-3);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 12px 16px;
+        outline: none;
+        width: 100%;
+        font-size: 14px;
+        transition: all 0.2s ease;
+      }
+      
+      input:focus, select:focus, textarea:focus { 
+        border-color: var(--brand); 
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        background: var(--panel-2);
+      }
+
+      .btn {
+        border: 1px solid var(--border); 
+        border-radius: 8px;
+        padding: 12px 20px; 
+        cursor: pointer; 
+        color: var(--text); 
+        background: var(--panel-2);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn:hover { 
+        transform: translateY(-1px);
+        box-shadow: var(--shadow);
+        background: var(--panel-3);
+      }
+      
+      .btn-secondary { 
+        background: var(--panel); 
+        border-color: var(--border); 
+        color: var(--text); 
+      }
+      
+      .btn-secondary:hover { background: var(--panel-2); }
+      .btn-danger { background: var(--panel-3); color: var(--text); }
+      .btn-success { background: var(--panel-3); color: var(--text); }
+
+      /* Tables */
+      .table-wrap { 
+        overflow: auto; 
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+      }
+      
+      table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-size: 14px; 
+      }
+      
+      thead tr { 
+        background: var(--panel-3); 
+      }
+      
+      th, td { 
+        padding: 16px 20px; 
+        text-align: left; 
+        border-bottom: 1px solid var(--border); 
+        vertical-align: middle; 
+      }
+      
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+      }
+      
+      tbody tr:hover td { 
+        background: var(--panel-2); 
+      }
+
+      /* Status Pills */
+      .pill {
+        display: inline-flex; 
+        align-items: center; 
+        gap: 6px;
+        padding: 6px 12px; 
+        border-radius: 16px; 
+        font-size: 11px; 
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .pill-green { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+      .pill-yellow { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+      .pill-red { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+      .pill-blue { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+
+      /* Toast Notifications */
+      #toast { 
+        position: fixed; 
+        right: 20px; 
+        top: 20px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px; 
+        z-index: 1000; 
+      }
+      
+      .toast {
+        background: var(--panel-2); 
+        color: #fff; 
+        padding: 16px 20px; 
+        border-radius: var(--radius); 
+        border: 1px solid var(--border);
+        font-size: 14px;
+        box-shadow: var(--shadow-lg);
+        min-width: 300px;
+        animation: slideIn 0.3s ease;
+      }
+      
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      
+      .toast.success { border-left: 4px solid var(--text); }
+      .toast.error { border-left: 4px solid var(--text); }
+      .toast.warning { border-left: 4px solid var(--text); }
+
+      /* Action buttons in tables */
+      .action-btn {
+        padding: 6px 12px;
+        margin: 0 2px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .action-btn.edit {
+        background: var(--panel-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .action-btn.delete {
+        background: var(--panel-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .action-btn:hover {
+        transform: scale(1.05);
+      }
+      
+      /* Client Grid Layout */
+      .client-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+      }
+
+      .client-card {
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        transition: all 0.2s ease;
+      }
+
+      .client-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        border-color: var(--text);
+      }
+
+      .client-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+
+      .client-name {
+        font-weight: 600;
+        font-size: 16px;
+        margin: 0;
+      }
+
+      .client-company {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .client-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .client-detail {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .detail-label {
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+      }
+
+      .detail-value {
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .client-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      /* Expense Row Layout */
+      .expense-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .expense-row {
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+        transition: all 0.2s ease;
+        display: grid;
+        grid-template-columns: 1fr 150px 120px 150px 120px;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .expense-row:hover {
+        background: var(--panel-3);
+        border-color: var(--text);
+        transform: translateX(4px);
+      }
+
+      .expense-main {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .expense-title {
+        font-weight: 600;
+        font-size: 15px;
+        margin: 0;
+        color: var(--text);
+      }
+
+      .expense-subtitle {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .expense-client {
+        font-size: 13px;
+        color: var(--text);
+        text-align: center;
+      }
+
+      .expense-date {
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .expense-amount {
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--text);
+        text-align: right;
+      }
+
+      .expense-actions {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .expense-actions .action-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+
+      /* Responsive for expense rows */
+      @media (max-width: 768px) {
+        .expense-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          text-align: left;
+        }
+        
+        .expense-client,
+        .expense-date,
+        .expense-amount {
+          text-align: left;
+        }
+        
+        .expense-actions {
+          justify-content: flex-start;
+        }
+      }
+
+      /* Hide sections by default */
+      .section { display: none; }
+      .section.active { display: block; animation: fadeIn 0.3s ease; }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+      }
+
+      .modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        min-width: 500px;
+        max-width: 90%;
+        box-shadow: var(--shadow-lg);
+      }
+
+      .modal h3 {
+        margin: 0 0 20px;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 24px;
+      }
+
+      /* Filter bar */
+      .filters {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+      }
+      .filters.clients { grid-template-columns: 1fr 200px auto auto; align-items: center; }
+      .filters.expenses { grid-template-columns: 1fr 180px 180px 200px 140px 140px; align-items: center; }
+
+      /* Responsive Design */
+      @media (max-width: 1200px) {
+        .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .filters.clients { grid-template-columns: 1fr 1fr; }
+        .filters.expenses { grid-template-columns: 1fr 1fr; }
+      }
+
+      @media (max-width: 1024px) {
+        .app { grid-template-columns: 1fr; }
+        .sidebar { 
+          position: relative; 
+          height: auto; 
+          grid-row: 1;
+        }
+        .grid-2 { grid-template-columns: 1fr; }
+        .form-row { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 768px) {
+        .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+        .main { padding: 16px; }
+        .card { padding: 16px; }
+        .modal-content { min-width: 90%; margin: 20px; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Toast Container -->
+    <div id="toast" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Client Modal -->
+    <div id="clientModal" class="modal" aria-hidden="true" role="dialog" aria-label="Client Modal">
+      <div class="modal-content">
+        <h3 id="clientModalTitle">Add New Client</h3>
+        <form id="clientForm" class="form-grid">
+          <div class="form-row">
+            <div class="field">
+              <label class="label">Client Name *</label>
+              <input name="client_name" required placeholder="Enter client name" />
+            </div>
+            <div class="field">
+              <label class="label">Company Name</label>
+              <input name="company_name" placeholder="Enter company name" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label class="label">Contact Info</label>
+              <input name="contact_info" placeholder="Phone / Email" />
+            </div>
+            <div class="field">
+              <label class="label">Service Name</label>
+              <input name="service_name" placeholder="Web Development" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label class="label">Service Cost</label>
+              <input type="number" step="0.01" name="service_cost" placeholder="1200.00" />
+            </div>
+            <div class="field">
+              <label class="label">Added Date</label>
+              <input type="date" name="added_date" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Project Status</label>
+            <select name="project_status">
+              <option value="Current">Current</option>
+              <option value="Pending">Pending</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeClientModal()">Cancel</button>
+            <button type="submit" class="btn" id="clientSubmitBtn">Add Client</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expenseModal" class="modal" aria-hidden="true" role="dialog" aria-label="Expense Modal">
+      <div class="modal-content">
+        <h3 id="expenseModalTitle">Add New Expense</h3>
+        <form id="expenseForm" class="form-grid">
+          <div class="form-row">
+            <div class="field">
+              <label class="label">Expense Date *</label>
+              <input type="date" name="expense_date" required />
+            </div>
+            <div class="field">
+              <label class="label">Amount *</label>
+              <input type="number" step="0.01" name="amount" required placeholder="100.00" />
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Expense Detail *</label>
+            <input name="expense_detail" required placeholder="Domain renewal, Office supplies, etc." />
+          </div>
+          <div class="field">
+            <label class="label">Linked Client</label>
+            <select name="expense_client_id" id="expenseClientSelect">
+              <option value="">Select client (optional)</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()">Cancel</button>
+            <button type="submit" class="btn" id="expenseSubmitBtn">Add Expense</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="app">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="head">
+          <h1>BusinessHub Pro</h1>
+          <div class="subtitle">Professional Edition</div>
+        </div>
+        <nav class="nav">
+          <button class="tab-btn active" data-tab="dashboard" onclick="showSection('dashboard')">
+            <span>📊</span>
+            Dashboard
+          </button>
+          <button class="tab-btn" data-tab="clients" onclick="showSection('clients')">
+            <span>👥</span>
+            Clients
+          </button>
+          <button class="tab-btn" data-tab="expenses" onclick="showSection('expenses')">
+            <span>🧾</span>
+            Expenses
+          </button>
+        </nav>
+        <div class="foot">
+          <div style="margin-bottom: 8px;">
+            <div class="status">
+              <div class="status-dot"></div>
+              System Active (In-Memory)
+            </div>
+          </div>
+          <div style="font-size: 10px; opacity: 0.7;">
+            No Backend • Session Storage • Premium UI
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main">
+        <header class="header">
+          <div>
+            <h2 id="pageTitle">Dashboard</h2>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary" onclick="exportData()">
+              <span>💾</span> Export Data
+            </button>
+            <button class="btn btn-secondary" onclick="importData()">
+              <span>📁</span> Import Data
+            </button>
+          </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="tab-dashboard" class="section active">
+          <div class="grid grid-4">
+            <div class="card">
+              <h3>Total Income</h3>
+              <div class="metric" id="metric-income">₹0</div>
+              <div class="muted">From all clients</div>
+            </div>
+            <div class="card">
+              <h3>Total Expenses</h3>
+              <div class="metric" id="metric-expenses">₹0</div>
+              <div class="muted">Business expenses</div>
+            </div>
+            <div class="card">
+              <h3>Net Profit</h3>
+              <div class="metric" id="metric-profit">₹0</div>
+              <div class="muted">Income - Expenses</div>
+            </div>
+            <div class="card">
+              <h3>Active Clients</h3>
+              <div class="count" id="active-clients-count">0</div>
+              <div class="muted">Total clients</div>
+            </div>
+          </div>
+
+          <div class="grid grid-4" style="margin-top: 24px;">
+            <div class="card">
+              <h3>Current Projects</h3>
+              <div class="count" id="count-current">0</div>
+              <div class="muted">In progress</div>
+            </div>
+            <div class="card">
+              <h3>Pending Projects</h3>
+              <div class="count" id="count-pending">0</div>
+              <div class="muted">Awaiting start</div>
+            </div>
+            <div class="card">
+              <h3>Completed Projects</h3>
+              <div class="count" id="count-completed">0</div>
+              <div class="muted">Successfully finished</div>
+            </div>
+            <div class="card">
+              <h3>Cancelled Projects</h3>
+              <div class="count" id="count-cancelled">0</div>
+              <div class="muted">Terminated</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Clients Section -->
+        <section id="tab-clients" class="section">
+          <div class="filters clients">
+            <input type="text" id="clientSearch" placeholder="Search clients..." />
+            <select id="clientStatusFilter">
+              <option value="">All Status</option>
+              <option value="Current">Current</option>
+              <option value="Pending">Pending</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+            <button class="btn" onclick="openClientModal()">
+              <span>➕</span> Add Client
+            </button>
+            <button class="btn btn-secondary" onclick="renderClients()">
+              <span>🔄</span> Refresh
+            </button>
+          </div>
+          <div id="clients-grid" class="client-grid"></div>
+        </section>
+
+        <!-- Expenses Section -->
+        <section id="tab-expenses" class="section">
+          <!-- Expense Summary Section -->
+          <div class="card" style="margin-bottom: 24px;">
+            <h3>Expense Summary</h3>
+            <div class="grid grid-4">
+              <div class="card">
+                <h3>Total Expenses</h3>
+                <div class="metric" id="summary-total-expenses">₹0</div>
+                <div class="muted">All time</div>
+              </div>
+              <div class="card">
+                <h3>This Month</h3>
+                <div class="metric" id="summary-month-expenses">₹0</div>
+                <div class="muted">Current month</div>
+              </div>
+              <div class="card">
+                <h3>Client Expenses</h3>
+                <div class="metric" id="summary-client-expenses">₹0</div>
+                <div class="muted">Linked to clients</div>
+              </div>
+              <div class="card">
+                <h3>General Expenses</h3>
+                <div class="metric" id="summary-general-expenses">₹0</div>
+                <div class="muted">Business expenses</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expense Management Section -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3>Expense Management</h3>
+              <div style="display: flex; gap: 12px;">
+                <button class="btn" onclick="openExpenseModal()">
+                  <span>➕</span> Add Expense
+                </button>
+                <button class="btn btn-secondary" onclick="renderExpenses()">
+                  <span>🔄</span> Refresh
+                </button>
+              </div>
+            </div>
+
+            <div class="filters expenses" style="margin-bottom: 20px;">
+              <input type="text" id="expenseSearch" placeholder="Search expenses..." />
+              <input type="date" id="expenseFrom" placeholder="From date" />
+              <input type="date" id="expenseTo" placeholder="To date" />
+              <select id="expenseClientFilter">
+                <option value="">All clients</option>
+              </select>
+              <input type="number" id="expenseMin" placeholder="Min amount" step="0.01" />
+              <input type="number" id="expenseMax" placeholder="Max amount" step="0.01" />
+            </div>
+
+            <div id="expenses-list" class="expense-list"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      // In-Memory Storage System (No localStorage, no IndexedDB)
+      class InMemoryStorage {
+        constructor() {
+          this.data = {
+            clients: [],
+            expenses: []
+          };
+          this.nextId = 1;
+        }
+
+        // Client methods
+        addClient(client) {
+          client.id = this.nextId++;
+          client.created_at = new Date().toISOString();
+          this.data.clients.push(client);
+          return client;
+        }
+
+        getClients() {
+          return this.data.clients;
+        }
+
+        updateClient(id, updates) {
+          const index = this.data.clients.findIndex(c => c.id === id);
+          if (index !== -1) {
+            this.data.clients[index] = { ...this.data.clients[index], ...updates };
+            return this.data.clients[index];
+          }
+          return null;
+        }
+
+        deleteClient(id) {
+          this.data.clients = this.data.clients.filter(c => c.id !== id);
+        }
+
+        // Expense methods
+        addExpense(expense) {
+          expense.id = this.nextId++;
+          expense.created_at = new Date().toISOString();
+          this.data.expenses.push(expense);
+          return expense;
+        }
+
+        getExpenses() {
+          return this.data.expenses;
+        }
+
+        updateExpense(id, updates) {
+          const index = this.data.expenses.findIndex(e => e.id === id);
+          if (index !== -1) {
+            this.data.expenses[index] = { ...this.data.expenses[index], ...updates };
+            return this.data.expenses[index];
+          }
+          return null;
+        }
+
+        deleteExpense(id) {
+          this.data.expenses = this.data.expenses.filter(e => e.id !== id);
+        }
+
+        // Export/Import
+        exportData() {
+          const dataStr = JSON.stringify(this.data, null, 2);
+          const dataBlob = new Blob([dataStr], { type: 'application/json' });
+          const url = URL.createObjectURL(dataBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'bms-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+
+        importData(importedData) {
+          if (importedData.clients && Array.isArray(importedData.clients)) {
+            this.data.clients = importedData.clients;
+          }
+          if (importedData.expenses && Array.isArray(importedData.expenses)) {
+            this.data.expenses = importedData.expenses;
+          }
+          // Update nextId to avoid conflicts
+          const allIds = [...this.data.clients, ...this.data.expenses].map(item => item.id || 0);
+          this.nextId = Math.max(...allIds, 0) + 1;
+        }
+      }
+
+      // Initialize storage
+      const storage = new InMemoryStorage();
+
+      // UI State
+      let currentEditingClient = null;
+      let currentEditingExpense = null;
+
+      // Toast Notifications
+      function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+            ${message}
+          </div>
+        `;
+        
+        document.getElementById('toast').appendChild(toast);
+        
+        setTimeout(() => {
+          toast.style.animation = 'slideOut 0.3s ease forwards';
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      // Section Management
+      function showSection(sectionName) {
+        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+        const targetSection = document.getElementById(`tab-${sectionName}`);
+        if (targetSection) targetSection.classList.add('active');
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        const tabBtn = document.querySelector(`[data-tab="${sectionName}"]`);
+        if (tabBtn) tabBtn.classList.add('active');
+        
+        const titles = {
+          'dashboard': 'Dashboard',
+          'clients': 'Client Management',
+          'expenses': 'Expense Management'
+        };
+        document.getElementById('pageTitle').textContent = titles[sectionName] || 'Dashboard';
+      }
+
+      // Client Modal Functions
+      function openClientModal(client = null) {
+        currentEditingClient = client;
+        const modal = document.getElementById('clientModal');
+        const form = document.getElementById('clientForm');
+        const title = document.getElementById('clientModalTitle');
+        const submitBtn = document.getElementById('clientSubmitBtn');
+
+        if (client) {
+          title.textContent = 'Edit Client';
+          submitBtn.textContent = 'Update Client';
+          Object.keys(client).forEach(key => {
+            const input = form.querySelector(`[name="${key}"]`);
+            if (input && key !== 'id' && key !== 'created_at') {
+              input.value = client[key] || '';
+            }
+          });
+        } else {
+          title.textContent = 'Add New Client';
+          submitBtn.textContent = 'Add Client';
+          form.reset();
+          const today = new Date().toISOString().split('T')[0];
+          form.querySelector('[name="added_date"]').value = today;
+        }
+        modal.style.display = 'block';
+      }
+
+      function closeClientModal() {
+        document.getElementById('clientModal').style.display = 'none';
+        document.getElementById('clientForm').reset();
+        currentEditingClient = null;
+      }
+
+      // Expense Modal Functions
+      function openExpenseModal(expense = null) {
+        currentEditingExpense = expense;
+        const modal = document.getElementById('expenseModal');
+        const form = document.getElementById('expenseForm');
+        const title = document.getElementById('expenseModalTitle');
+        const submitBtn = document.getElementById('expenseSubmitBtn');
+
+        updateClientSelects();
+
+        if (expense) {
+          title.textContent = 'Edit Expense';
+          submitBtn.textContent = 'Update Expense';
+          Object.keys(expense).forEach(key => {
+            const input = form.querySelector(`[name="${key}"]`);
+            if (input && key !== 'id' && key !== 'created_at') {
+              input.value = expense[key] || '';
+            }
+          });
+        } else {
+          title.textContent = 'Add New Expense';
+          submitBtn.textContent = 'Add Expense';
+          form.reset();
+          const today = new Date().toISOString().split('T')[0];
+          form.querySelector('[name="expense_date"]').value = today;
+        }
+        modal.style.display = 'block';
+      }
+
+      function closeExpenseModal() {
+        document.getElementById('expenseModal').style.display = 'none';
+        document.getElementById('expenseForm').reset();
+        currentEditingExpense = null;
+      }
+
+      // Delete Functions
+      function deleteClient(id) {
+        if (confirm('Are you sure you want to delete this client?')) {
+          storage.deleteClient(id);
+          renderClients();
+          updateDashboard();
+          updateExpenseSummary();
+          updateClientSelects();
+          showToast('Client deleted successfully!', 'success');
+        }
+      }
+
+      function deleteExpense(id) {
+        if (confirm('Are you sure you want to delete this expense?')) {
+          storage.deleteExpense(id);
+          renderExpenses();
+          updateDashboard();
+          updateExpenseSummary();
+          showToast('Expense deleted successfully!', 'success');
+        }
+      }
+
+      // Filter Functions
+      function getClientFilters() {
+        const search = (document.getElementById('clientSearch')?.value || '').toLowerCase().trim();
+        const status = document.getElementById('clientStatusFilter')?.value || '';
+        return { search, status };
+      }
+
+      function filterClients(clients) {
+        const { search, status } = getClientFilters();
+        return clients.filter(c => {
+          const matchesText = !search || [c.client_name, c.company_name, c.service_name].some(v => (v||'').toLowerCase().includes(search));
+          const matchesStatus = !status || (c.project_status === status);
+          return matchesText && matchesStatus;
+        });
+      }
+
+      function getExpenseFilters() {
+        return {
+          search: (document.getElementById('expenseSearch')?.value || '').toLowerCase().trim(),
+          from: document.getElementById('expenseFrom')?.value || '',
+          to: document.getElementById('expenseTo')?.value || '',
+          clientId: document.getElementById('expenseClientFilter')?.value || '',
+          min: parseFloat(document.getElementById('expenseMin')?.value || '') || null,
+          max: parseFloat(document.getElementById('expenseMax')?.value || '') || null,
+        };
+      }
+
+      function filterExpenses(expenses) {
+        const f = getExpenseFilters();
+        return expenses.filter(e => {
+          const matchesSearch = !f.search || (e.expense_detail || '').toLowerCase().includes(f.search);
+          const d = e.expense_date ? new Date(e.expense_date) : null;
+          const afterFrom = !f.from || (d && d >= new Date(f.from));
+          const beforeTo = !f.to || (d && d <= new Date(f.to));
+          const byClient = !f.clientId || (String(e.expense_client_id||'') === String(f.clientId));
+          const amt = parseFloat(e.amount) || 0;
+          const aboveMin = f.min === null || amt >= f.min;
+          const belowMax = f.max === null || amt <= f.max;
+          return matchesSearch && afterFrom && beforeTo && byClient && aboveMin && belowMax;
+        });
+      }
+
+      // Render Functions
+      function renderClients() {
+        const clientsGrid = document.getElementById('clients-grid');
+        const clients = filterClients(storage.getClients());
+        
+        if (!clients || clients.length === 0) {
+          clientsGrid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">
+              <span style="font-size: 24px; margin-bottom: 8px; opacity: 0.5;">👥</span><br>
+              No clients found. Add a client or adjust filters.
+            </div>
+          `;
+          return;
+        }
+
+        clientsGrid.innerHTML = clients.map(client => `
+          <div class="client-card">
+            <div class="client-header">
+              <div>
+                <h4 class="client-name">${client.client_name || 'N/A'}</h4>
+                <div class="client-company">${client.company_name || 'N/A'}</div>
+              </div>
+              <span class="pill pill-${getStatusColor(client.project_status)}">${client.project_status || 'Current'}</span>
+            </div>
+            
+            <div class="client-details">
+              <div class="client-detail">
+                <span class="detail-label">Contact</span>
+                <span class="detail-value">${client.contact_info || 'N/A'}</span>
+              </div>
+              <div class="client-detail">
+                <span class="detail-label">Service</span>
+                <span class="detail-value">${client.service_name || 'N/A'}</span>
+              </div>
+              <div class="client-detail">
+                <span class="detail-label">Cost</span>
+                <span class="detail-value"><strong>₹${(parseFloat(client.service_cost) || 0).toLocaleString()}</strong></span>
+              </div>
+              <div class="client-detail">
+                <span class="detail-label">Date</span>
+                <span class="detail-value">${client.added_date ? new Date(client.added_date).toLocaleDateString() : 'N/A'}</span>
+              </div>
+            </div>
+            
+            <div class="client-actions">
+              <button class="action-btn edit" onclick='openClientModal(${JSON.stringify(client).replace(/"/g, '&quot;')})'>
+                ✏️ Edit
+              </button>
+              <button class="action-btn delete" onclick="deleteClient(${client.id})">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function renderExpenses() {
+        const expensesList = document.getElementById('expenses-list');
+        const expenses = filterExpenses(storage.getExpenses());
+        const clients = storage.getClients();
+
+        if (!expenses || expenses.length === 0) {
+          expensesList.innerHTML = `
+            <div style="text-align: center; color: var(--muted); padding: 40px; background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius);">
+              <span style="font-size: 24px; margin-bottom: 8px; opacity: 0.5;">🧾</span><br>
+              No expenses found. Add an expense or adjust filters.
+            </div>
+          `;
+          return;
+        }
+
+        expensesList.innerHTML = expenses.map(expense => {
+          const client = clients.find(c => String(c.id) === String(expense.expense_client_id));
+          return `
+            <div class="expense-row">
+              <div class="expense-main">
+                <div class="expense-title">${expense.expense_detail || 'N/A'}</div>
+                <div class="expense-subtitle">${client ? 'Client Expense' : 'Business Expense'}</div>
+              </div>
+              
+              <div class="expense-client">
+                ${client ? client.client_name : 'General'}
+              </div>
+              
+              <div class="expense-date">
+                ${expense.expense_date ? new Date(expense.expense_date).toLocaleDateString() : 'N/A'}
+              </div>
+              
+              <div class="expense-amount">
+                ₹${(parseFloat(expense.amount) || 0).toLocaleString()}
+              </div>
+              
+              <div class="expense-actions">
+                <button class="action-btn edit" onclick='openExpenseModal(${JSON.stringify(expense).replace(/"/g, '&quot;')})'>
+                  ✏️ Edit
+                </button>
+                <button class="action-btn delete" onclick="deleteExpense(${expense.id})">
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function updateClientSelects() {
+        const clients = storage.getClients();
+        const selectForm = document.getElementById('expenseClientSelect');
+        const selectFilter = document.getElementById('expenseClientFilter');
+
+        const options = ['<option value="">Select client (optional)</option>'].concat(
+          clients.map(c => `<option value="${c.id}">${c.client_name}${c.company_name ? ' (' + c.company_name + ')' : ''}</option>`)
+        ).join('');
+        if (selectForm) selectForm.innerHTML = options;
+
+        const filterOptions = ['<option value="">All clients</option>'].concat(
+          clients.map(c => `<option value="${c.id}">${c.client_name}${c.company_name ? ' (' + c.company_name + ')' : ''}</option>`)
+        ).join('');
+        if (selectFilter) selectFilter.innerHTML = filterOptions;
+      }
+
+      function updateDashboard() {
+        const clients = storage.getClients();
+        const expenses = storage.getExpenses();
+        
+        const totalIncome = clients.reduce((sum, client) => sum + (parseFloat(client.service_cost) || 0), 0);
+        const totalExpenses = expenses.reduce((sum, expense) => sum + (parseFloat(expense.amount) || 0), 0);
+        const netProfit = totalIncome - totalExpenses;
+        
+        document.getElementById('metric-income').textContent = `₹${totalIncome.toLocaleString()}`;
+        document.getElementById('metric-expenses').textContent = `₹${totalExpenses.toLocaleString()}`;
+        document.getElementById('metric-profit').textContent = `₹${netProfit.toLocaleString()}`;
+        
+        const statusCounts = clients.reduce((counts, client) => {
+          const status = (client.project_status || 'Current').toLowerCase();
+          counts[status] = (counts[status] || 0) + 1;
+          return counts;
+        }, {});
+        
+        document.getElementById('count-current').textContent = statusCounts.current || 0;
+        document.getElementById('count-pending').textContent = statusCounts.pending || 0;
+        document.getElementById('count-completed').textContent = statusCounts.completed || 0;
+        document.getElementById('count-cancelled').textContent = statusCounts.cancelled || 0;
+        document.getElementById('active-clients-count').textContent = clients.length;
+      }
+
+      function updateExpenseSummary() {
+        const expenses = storage.getExpenses();
+        const clients = storage.getClients();
+        
+        // Total expenses
+        const totalExpenses = expenses.reduce((sum, expense) => sum + (parseFloat(expense.amount) || 0), 0);
+        
+        // This month expenses
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const monthExpenses = expenses.filter(expense => {
+          if (!expense.expense_date) return false;
+          const expenseDate = new Date(expense.expense_date);
+          return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+        }).reduce((sum, expense) => sum + (parseFloat(expense.amount) || 0), 0);
+        
+        // Client vs General expenses
+        const clientExpenses = expenses.filter(expense => expense.expense_client_id)
+          .reduce((sum, expense) => sum + (parseFloat(expense.amount) || 0), 0);
+        const generalExpenses = totalExpenses - clientExpenses;
+        
+        // Update summary elements
+        const totalEl = document.getElementById('summary-total-expenses');
+        const monthEl = document.getElementById('summary-month-expenses');
+        const clientEl = document.getElementById('summary-client-expenses');
+        const generalEl = document.getElementById('summary-general-expenses');
+        
+        if (totalEl) totalEl.textContent = `₹${totalExpenses.toLocaleString()}`;
+        if (monthEl) monthEl.textContent = `₹${monthExpenses.toLocaleString()}`;
+        if (clientEl) clientEl.textContent = `₹${clientExpenses.toLocaleString()}`;
+        if (generalEl) generalEl.textContent = `₹${generalExpenses.toLocaleString()}`;
+      }
+
+      function getStatusColor(status) {
+        const colors = { 'Current': 'blue', 'Pending': 'yellow', 'Completed': 'green', 'Cancelled': 'red' };
+        return colors[status] || 'blue';
+      }
+
+      // Export/Import Functions
+      function exportData() {
+        storage.exportData();
+        showToast('Data exported successfully!', 'success');
+      }
+
+      function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          try {
+            const text = await file.text();
+            const importedData = JSON.parse(text);
+            storage.importData(importedData);
+            renderAll();
+            showToast('Data imported successfully!', 'success');
+          } catch (error) {
+            showToast('Error importing data: ' + error.message, 'error');
+          }
+        };
+        input.click();
+      }
+
+      // Form Handlers
+      document.addEventListener('submit', (e) => {
+        const form = e.target;
+        
+        if (form && form.id === 'clientForm') {
+          e.preventDefault();
+          const formData = new FormData(form);
+          const clientData = Object.fromEntries(formData.entries());
+          if (clientData.service_cost) clientData.service_cost = parseFloat(clientData.service_cost);
+          
+          try {
+            if (currentEditingClient) {
+              storage.updateClient(currentEditingClient.id, clientData);
+              showToast('Client updated successfully!', 'success');
+            } else {
+              storage.addClient(clientData);
+              showToast('Client added successfully!', 'success');
+            }
+            closeClientModal();
+            renderClients();
+            updateDashboard();
+            updateExpenseSummary();
+            updateClientSelects();
+          } catch (error) {
+            showToast('Error saving client: ' + error.message, 'error');
+          }
+        }
+        
+        if (form && form.id === 'expenseForm') {
+          e.preventDefault();
+          const formData = new FormData(form);
+          const expenseData = Object.fromEntries(formData.entries());
+          if (expenseData.amount) expenseData.amount = parseFloat(expenseData.amount);
+          
+          try {
+            if (currentEditingExpense) {
+              storage.updateExpense(currentEditingExpense.id, expenseData);
+              showToast('Expense updated successfully!', 'success');
+            } else {
+              storage.addExpense(expenseData);
+              showToast('Expense added successfully!', 'success');
+            }
+            closeExpenseModal();
+            renderExpenses();
+            updateDashboard();
+            updateExpenseSummary();
+          } catch (error) {
+            showToast('Error saving expense: ' + error.message, 'error');
+          }
+        }
+      });
+
+      // Close modals on outside click
+      window.addEventListener('click', function(event) {
+        const clientModal = document.getElementById('clientModal');
+        const expenseModal = document.getElementById('expenseModal');
+        if (event.target === clientModal) closeClientModal();
+        if (event.target === expenseModal) closeExpenseModal();
+      });
+
+      // Filter listeners
+      function attachFilterListeners() {
+        const clientEls = ['clientSearch', 'clientStatusFilter'];
+        clientEls.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('input', renderClients);
+            el.addEventListener('change', renderClients);
+          }
+        });
+        
+        const expEls = ['expenseSearch', 'expenseFrom', 'expenseTo', 'expenseClientFilter', 'expenseMin', 'expenseMax'];
+        expEls.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('input', renderExpenses);
+            el.addEventListener('change', renderExpenses);
+          }
+        });
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+          switch(e.key) {
+            case '1': e.preventDefault(); showSection('dashboard'); break;
+            case '2': e.preventDefault(); showSection('clients'); break;
+            case '3': e.preventDefault(); showSection('expenses'); break;
+            case 'n': 
+              e.preventDefault(); 
+              if (document.querySelector('#tab-clients.active')) { 
+                openClientModal(); 
+              } else if (document.querySelector('#tab-expenses.active')) { 
+                openExpenseModal(); 
+              } 
+              break;
+            case 's': e.preventDefault(); exportData(); break;
+          }
+        }
+        if (e.key === 'Escape') { 
+          closeClientModal(); 
+          closeExpenseModal(); 
+        }
+      });
+
+      function renderAll() {
+        updateDashboard();
+        updateExpenseSummary();
+        renderClients();
+        renderExpenses();
+        updateClientSelects();
+      }
+
+      // Initialize App
+      function initApp() {
+        updateClientSelects();
+        attachFilterListeners();
+        renderAll();
+        
+        // Add some sample data for demonstration
+        storage.addClient({
+          client_name: "John Doe",
+          company_name: "Tech Solutions Inc",
+          contact_info: "john@techsolutions.com",
+          service_name: "Website Development",
+          service_cost: 25000,
+          added_date: "2024-01-15",
+          project_status: "Current"
+        });
+        
+        storage.addExpense({
+          expense_date: "2024-01-20",
+          expense_detail: "Domain and Hosting",
+          amount: 2500,
+          expense_client_id: 1
+        });
+        
+        renderAll();
+        
+        setTimeout(() => {
+          showToast('Welcome to BusinessHub Pro! Your data is stored in memory for this session.', 'success');
+        }, 600);
+        
+        console.log('BusinessHub Pro (In-Memory) initialized successfully!');
+      }
+
+      // Start the app
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+      } else {
+        initApp();
+      }
+    </script>
+  </body>
+</html>
